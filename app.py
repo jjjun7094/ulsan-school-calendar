@@ -1,83 +1,77 @@
 import streamlit as st
-import matplotlib.pyplot as plt
 import calendar
-import datetime
-import matplotlib as mpl
+import matplotlib.pyplot as plt
+from datetime import datetime
 
-# =========================
-# 1. 한글 폰트 설정 (오류 없는 방식)
-# =========================
-mpl.rcParams["font.family"] = "DejaVu Sans"
-mpl.rcParams["axes.unicode_minus"] = False
-
-# =========================
-# 2. 기본 설정
-# =========================
-st.set_page_config(page_title="울산 학교 일정 달력", layout="centered")
-st.title("📅 울산 학교 일정 달력")
-
+# ---------------------------
+# 기본 설정
+# ---------------------------
+st.set_page_config(layout="wide")
 calendar.setfirstweekday(calendar.MONDAY)
 
-# =========================
-# 3. 일정 데이터
-# =========================
-events = {
-    "2026-01-01": "신정",
-    "2026-03-02": "1학기 개학",
-    "2026-04-10": "중간고사",
-    "2026-05-05": "어린이날",
-    "2026-06-25": "기말고사",
-    "2026-07-20": "여름방학",
-    "2026-09-01": "2학기 개학",
-    "2026-10-15": "체육대회",
-    "2026-11-20": "수능",
-    "2026-12-24": "겨울방학"
+# ---------------------------
+# 울산공업고등학교 일정 (예시)
+# ---------------------------
+EVENTS = {
+    "2026-3-2": "입학식 · 개학",
+    "2026-3-25": "전국연합학력평가",
+    "2026-4-10": "중간고사",
+    "2026-5-5": "어린이날",
+    "2026-5-15": "학교 축제",
+    "2026-6-20": "기말고사",
+    "2026-7-20": "여름방학",
 }
 
-# =========================
-# 4. 월 선택
-# =========================
-year = st.selectbox("연도 선택", [2026])
-month = st.selectbox("월 선택", list(range(1, 13)))
+# ---------------------------
+# 제목
+# ---------------------------
+st.title("📅 울산공업고등학교 일정 달력")
 
-# =========================
-# 5. 달력 그리기
-# =========================
+# ---------------------------
+# 연/월 선택
+# ---------------------------
+year = st.selectbox("연도 선택", [2026])
+month = st.slider("월 선택", 1, 12, 3)
+
+# ---------------------------
+# 달력 생성
+# ---------------------------
 cal = calendar.monthcalendar(year, month)
 
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=(14, 10))
+ax.set_xlim(0, 7)
+ax.set_ylim(0, len(cal) + 1)
 ax.axis("off")
 
-table = ax.table(
-    cellText=cal,
-    colLabels=["월", "화", "수", "목", "금", "토", "일"],
-    loc="center",
-    cellLoc="center"
-)
+# 요일 표시
+weekdays = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
+for i, day in enumerate(weekdays):
+    ax.text(i + 0.5, len(cal) + 0.5, day, ha="center", va="center", fontsize=16, fontweight="bold")
 
-table.scale(1, 2)
+# 날짜 & 일정 표시
+for week_idx, week in enumerate(cal):
+    for day_idx, day in enumerate(week):
+        if day == 0:
+            continue
 
-# =========================
-# 6. 일정 있는 날짜 색칠
-# =========================
-for (row, col), cell in table.get_celld().items():
-    if row == 0:
-        cell.set_facecolor("#DDDDDD")
-        continue
+        y = len(cal) - week_idx - 0.5
+        x = day_idx + 0.1
 
-    day = cell.get_text().get_text()
-    if day.isdigit():
-        date_str = f"{year}-{month:02d}-{int(day):02d}"
-        if date_str in events:
-            cell.set_facecolor("#FFCCCC")
+        date_key = f"{year}-{month}-{day}"
+        event = EVENTS.get(date_key)
 
-# =========================
-# 7. 출력
-# =========================
+        # 일정 있는 날 배경색
+        if event:
+            ax.add_patch(plt.Rectangle((day_idx, y - 0.5), 1, 1, color="#FFD966"))
+
+        # 날짜
+        ax.text(x, y + 0.2, f"{day}", fontsize=16, fontweight="bold")
+
+        # 일정 텍스트
+        if event:
+            ax.text(x, y - 0.1, event, fontsize=12, wrap=True)
+
+# ---------------------------
+# 출력
+# ---------------------------
 st.pyplot(fig)
-
-st.subheader("📌 이번 달 일정")
-for date, event in events.items():
-    y, m, d = date.split("-")
-    if int(y) == year and int(m) == month:
-        st.write(f"• {d}일 : {event}")
