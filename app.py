@@ -2,6 +2,8 @@ import streamlit as st
 import calendar
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib import font_manager
+import os
 
 # ---------------------------
 # 기본 설정
@@ -9,6 +11,17 @@ import matplotlib as mpl
 st.set_page_config(page_title="울산공업고등학교 일정 달력", layout="wide")
 calendar.setfirstweekday(calendar.MONDAY)
 mpl.rcParams["axes.unicode_minus"] = False
+
+# ---------------------------
+# ✅ 한글 폰트 설정 (있으면 사용, 없으면 그냥 넘어감)
+# ---------------------------
+try:
+    font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+    if os.path.exists(font_path):
+        font_name = font_manager.FontProperties(fname=font_path).get_name()
+        plt.rc("font", family=font_name)
+except:
+    pass  # 폰트 없어도 앱 안 죽게
 
 # ---------------------------
 # 학사 일정 (한국어)
@@ -34,7 +47,7 @@ year = st.selectbox("연도 선택", [2026])
 month = st.slider("월 선택", 1, 12, 5)
 
 # ---------------------------
-# 요일 (한국어)
+# 요일 (한글, Streamlit)
 # ---------------------------
 cols = st.columns(7)
 weekdays = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
@@ -57,17 +70,15 @@ def draw_calendar(year, month):
     ax.axis("off")
 
     table_data = []
-
     for week in cal:
         row = []
         for day in week:
             if day == 0:
                 row.append("")
             else:
-                # ✅ 핵심 수정 부분 (일정 한국어 정상 출력)
                 key = f"{year}-{month:02d}-{day:02d}"
                 if key in events:
-                    row.append(f"{day}\n{events[key]}")
+                    row.append(f"{day}\n{events[key]}")  # ✅ 한국어 일정
                 else:
                     row.append(str(day))
         table_data.append(row)
