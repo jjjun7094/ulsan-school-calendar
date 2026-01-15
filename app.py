@@ -1,154 +1,145 @@
 import streamlit as st
 import calendar
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
-st.set_page_config(layout="wide")
+# ---------------------------
+# 기본 설정
+# ---------------------------
+st.set_page_config(page_title="울산공업고등학교 일정 달력", layout="wide")
+calendar.setfirstweekday(calendar.MONDAY)
+mpl.rcParams["axes.unicode_minus"] = False
 
-# =====================
-# 월 상태 저장 (핵심)
-# =====================
-if "year" not in st.session_state:
-    st.session_state.year = 2026
-if "month" not in st.session_state:
-    st.session_state.month = 5
-
-YEAR = st.session_state.year
-MONTH = st.session_state.month
-
-# =====================
-# 일정 (한국어)
-# =====================
+# ---------------------------
+# 2026년 학사 + 공휴일 일정
+# ---------------------------
 events = {
-    (2026, 5, 5): "어린이날",
-    (2026, 5, 21): "체육대회"
+    # 1월
+    "2026-01-01": "신정",
+    "2026-01-09": "졸업식 / 종업식",
+    "2026-01-10": "겨울방학",
+
+    # 2월
+    "2026-02-16": "설날연휴",
+    "2026-02-17": "설날",
+    "2026-02-18": "설날연휴",
+
+    # 3월
+    "2026-03-01": "삼일절",
+    "2026-03-02": "1학기 개학 / 입학식",
+
+    # 4월
+    "2026-04-10": "중간고사",
+
+    # 5월
+    "2026-05-05": "어린이날",
+    "2026-05-24": "부처님오신날",
+    "2026-05-25": "대체공휴일",
+
+    # 6월
+    "2026-06-06": "현충일",
+    "2026-06-10": "기말고사",
+    "2026-06-23": "여름방학",
+
+    # 8월
+    "2026-08-15": "광복절",
+    "2026-08-17": "대체공휴일",
+
+    # 9월
+    "2026-09-01": "2학기 개학",
+    "2026-09-24": "추석연휴",
+    "2026-09-25": "추석",
+    "2026-09-26": "추석연휴",
+
+    # 10월
+    "2026-10-03": "개천절",
+    "2026-10-05": "대체공휴일",
+    "2026-10-09": "한글날",
+    "2026-10-20": "중간고사",
+
+    # 12월
+    "2026-12-08": "기말고사",
+    "2026-12-25": "성탄절",
 }
 
-# 요일
-weekdays = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
-
-# =====================
-# 월 이동 버튼
-# =====================
-col1, col2, col3 = st.columns([1, 2, 1])
-
-with col1:
-    if st.button("◀ 이전 달"):
-        if MONTH == 1:
-            st.session_state.month = 12
-            st.session_state.year -= 1
-        else:
-            st.session_state.month -= 1
-        st.rerun()
-
-with col3:
-    if st.button("다음 달 ▶"):
-        if MONTH == 12:
-            st.session_state.month = 1
-            st.session_state.year += 1
-        else:
-            st.session_state.month += 1
-        st.rerun()
-
-# =====================
-# CSS (가독성)
-# =====================
-st.markdown("""
-<style>
-.calendar {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-
-.calendar th {
-    padding: 12px;
-    border: 1px solid #444;
-    font-size: 18px;
-    color: white;
-    background-color: #1f2937;
-}
-
-.calendar td {
-    height: 120px;
-    vertical-align: top;
-    padding: 10px;
-    border: 1px solid #333;
-    color: white;
-    font-size: 16px;
-}
-
-.day {
-    font-size: 20px;
-    font-weight: bold;
-}
-
-.event {
-    background-color: rgba(46, 204, 113, 0.25);
-    border-left: 5px solid #2ecc71;
-}
-
-.event-text {
-    margin-top: 8px;
-    font-size: 14px;
-    color: white;
-}
-
-.sat {
-    background-color: rgba(52, 152, 219, 0.2);
-}
-
-.sun {
-    background-color: rgba(231, 76, 60, 0.2);
-}
-</style>
-""", unsafe_allow_html=True)
-
-# =====================
+# ---------------------------
 # 제목
-# =====================
-st.markdown(
-    f"<h1 style='text-align:center;'>{YEAR}년 {MONTH}월</h1>",
-    unsafe_allow_html=True
-)
+# ---------------------------
+st.title("🏫 울산공업고등학교 2026 일정 달력")
 
-# =====================
-# 달력 생성
-# =====================
-cal = calendar.Calendar(firstweekday=0)
-month_days = cal.monthdayscalendar(YEAR, MONTH)
+year = 2026
+month = st.slider("월 선택", 1, 12, 5)
 
-html = "<table class='calendar'>"
+# ---------------------------
+# 요일 (한글)
+# ---------------------------
+cols = st.columns(7)
+weekdays = ["월", "화", "수", "목", "금", "토", "일"]
 
-# 요일
-html += "<tr>"
-for wd in weekdays:
-    html += f"<th>{wd}</th>"
-html += "</tr>"
+for col, day in zip(cols, weekdays):
+    col.markdown(
+        f"<div style='text-align:center; font-weight:bold; font-size:18px;'>{day}</div>",
+        unsafe_allow_html=True
+    )
 
-# 날짜
-for week in month_days:
-    html += "<tr>"
-    for i, day in enumerate(week):
-        classes = []
+st.markdown("---")
 
-        if i == 5:
-            classes.append("sat")
-        if i == 6:
-            classes.append("sun")
-        if (YEAR, MONTH, day) in events:
-            classes.append("event")
+# ---------------------------
+# 달력 그리기
+# ---------------------------
+def draw_calendar(year, month):
+    cal = calendar.monthcalendar(year, month)
 
-        class_str = " ".join(classes)
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.axis("off")
 
-        if day == 0:
-            html += "<td></td>"
-        else:
-            html += f"<td class='{class_str}'>"
-            html += f"<div class='day'>{day}</div>"
-            if (YEAR, MONTH, day) in events:
-                html += f"<div class='event-text'>{events[(YEAR, MONTH, day)]}</div>"
-            html += "</td>"
-    html += "</tr>"
+    table_data = []
+    for week in cal:
+        row = []
+        for day in week:
+            if day == 0:
+                row.append("")
+            else:
+                key = f"{year}-{month:02d}-{day:02d}"
+                if key in events:
+                    row.append(f"{day}\n{events[key]}")
+                else:
+                    row.append(str(day))
+        table_data.append(row)
 
-html += "</table>"
+    table = ax.table(
+        cellText=table_data,
+        cellLoc="left",
+        loc="center"
+    )
 
-st.markdown(html, unsafe_allow_html=True)
+    table.auto_set_font_size(False)
+    table.set_fontsize(12)
+    table.scale(1.2, 2.2)
+
+    # 기본 색
+    for r in range(len(table_data)):
+        for c in range(7):
+            table[r, c].set_facecolor("#111111")
+            table[r, c].get_text().set_color("white")
+
+    # 토요일 / 일요일
+    for r in range(len(table_data)):
+        table[r, 5].set_facecolor("#1f3a5f")  # 토
+        table[r, 6].set_facecolor("#5f1f1f")  # 일
+
+    # 일정 있는 날
+    for r, week in enumerate(cal):
+        for c, day in enumerate(week):
+            if day != 0:
+                key = f"{year}-{month:02d}-{day:02d}"
+                if key in events:
+                    table[r, c].set_facecolor("#fff3b0")
+                    table[r, c].get_text().set_color("black")
+
+    ax.set_title(f"{year}년 {month}월", fontsize=18, pad=15, color="white")
+    fig.patch.set_facecolor("#0e1117")
+
+    st.pyplot(fig)
+
+draw_calendar(year, month)
