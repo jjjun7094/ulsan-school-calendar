@@ -1,26 +1,55 @@
 import streamlit as st
 import calendar
-from datetime import date
 
 st.set_page_config(layout="wide")
 
 # =====================
-# 설정
+# 월 상태 저장 (핵심)
 # =====================
-YEAR = 2026
-MONTH = 5
+if "year" not in st.session_state:
+    st.session_state.year = 2026
+if "month" not in st.session_state:
+    st.session_state.month = 5
 
-# 일정 (한국어만)
+YEAR = st.session_state.year
+MONTH = st.session_state.month
+
+# =====================
+# 일정 (한국어)
+# =====================
 events = {
-    5: "어린이날",
-    21: "체육대회"
+    (2026, 5, 5): "어린이날",
+    (2026, 5, 21): "체육대회"
 }
 
-# 요일 (월~일)
+# 요일
 weekdays = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
 
 # =====================
-# CSS (가독성 해결 핵심)
+# 월 이동 버튼
+# =====================
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col1:
+    if st.button("◀ 이전 달"):
+        if MONTH == 1:
+            st.session_state.month = 12
+            st.session_state.year -= 1
+        else:
+            st.session_state.month -= 1
+        st.rerun()
+
+with col3:
+    if st.button("다음 달 ▶"):
+        if MONTH == 12:
+            st.session_state.month = 1
+            st.session_state.year += 1
+        else:
+            st.session_state.month += 1
+        st.rerun()
+
+# =====================
+# CSS (가독성)
 # =====================
 st.markdown("""
 <style>
@@ -53,22 +82,20 @@ st.markdown("""
 }
 
 .event {
-    background-color: rgba(46, 204, 113, 0.25); /* 연한 초록 */
+    background-color: rgba(46, 204, 113, 0.25);
     border-left: 5px solid #2ecc71;
 }
 
 .event-text {
     margin-top: 8px;
     font-size: 14px;
-    color: #ffffff;  /* 일정 글자 흰색 */
+    color: white;
 }
 
-/* 토요일 */
 .sat {
     background-color: rgba(52, 152, 219, 0.2);
 }
 
-/* 일요일 */
 .sun {
     background-color: rgba(231, 76, 60, 0.2);
 }
@@ -78,17 +105,20 @@ st.markdown("""
 # =====================
 # 제목
 # =====================
-st.markdown(f"<h1 style='text-align:center;'>{YEAR}년 {MONTH}월</h1>", unsafe_allow_html=True)
+st.markdown(
+    f"<h1 style='text-align:center;'>{YEAR}년 {MONTH}월</h1>",
+    unsafe_allow_html=True
+)
 
 # =====================
 # 달력 생성
 # =====================
-cal = calendar.Calendar(firstweekday=0)  # 월요일 시작
+cal = calendar.Calendar(firstweekday=0)
 month_days = cal.monthdayscalendar(YEAR, MONTH)
 
 html = "<table class='calendar'>"
 
-# 요일 헤더
+# 요일
 html += "<tr>"
 for wd in weekdays:
     html += f"<th>{wd}</th>"
@@ -104,7 +134,7 @@ for week in month_days:
             classes.append("sat")
         if i == 6:
             classes.append("sun")
-        if day in events:
+        if (YEAR, MONTH, day) in events:
             classes.append("event")
 
         class_str = " ".join(classes)
@@ -114,8 +144,8 @@ for week in month_days:
         else:
             html += f"<td class='{class_str}'>"
             html += f"<div class='day'>{day}</div>"
-            if day in events:
-                html += f"<div class='event-text'>{events[day]}</div>"
+            if (YEAR, MONTH, day) in events:
+                html += f"<div class='event-text'>{events[(YEAR, MONTH, day)]}</div>"
             html += "</td>"
     html += "</tr>"
 
