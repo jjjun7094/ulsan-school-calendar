@@ -1,41 +1,16 @@
 import streamlit as st
 import calendar
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-from matplotlib import font_manager
-import os
+from datetime import date
 
-# ---------------------------
-# 기본 설정
-# ---------------------------
 st.set_page_config(page_title="울산공업고등학교 일정 달력", layout="wide")
 calendar.setfirstweekday(calendar.MONDAY)
-mpl.rcParams["axes.unicode_minus"] = False
 
 # ---------------------------
-# ✅ 한글 폰트 설정 (있으면 사용, 없으면 그냥 넘어감)
-# ---------------------------
-try:
-    font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-    if os.path.exists(font_path):
-        font_name = font_manager.FontProperties(fname=font_path).get_name()
-        plt.rc("font", family=font_name)
-except:
-    pass  # 폰트 없어도 앱 안 죽게
-
-# ---------------------------
-# 학사 일정 (한국어)
+# 일정 (한국어)
 # ---------------------------
 events = {
-    "2026-03-02": "1학기 개학 / 입학식",
-    "2026-04-10": "중간고사",
     "2026-05-05": "어린이날",
     "2026-05-21": "체육대회",
-    "2026-06-10": "기말고사",
-    "2026-06-23": "여름방학",
-    "2026-09-01": "2학기 개학",
-    "2026-10-20": "중간고사",
-    "2026-12-08": "기말고사",
 }
 
 # ---------------------------
@@ -47,66 +22,67 @@ year = st.selectbox("연도 선택", [2026])
 month = st.slider("월 선택", 1, 12, 5)
 
 # ---------------------------
-# 요일 (한글, Streamlit)
+# 요일
 # ---------------------------
-cols = st.columns(7)
 weekdays = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
-
-for col, day in zip(cols, weekdays):
-    col.markdown(
-        f"<div style='text-align:center; font-weight:bold; font-size:18px;'>{day}</div>",
-        unsafe_allow_html=True
-    )
+cols = st.columns(7)
+for c, d in zip(cols, weekdays):
+    c.markdown(f"**{d}**")
 
 st.markdown("---")
 
 # ---------------------------
-# 달력 그리기
+# 달력 생성 (HTML)
 # ---------------------------
-def draw_calendar(year, month):
-    cal = calendar.monthcalendar(year, month)
+cal = calendar.monthcalendar(year, month)
 
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.axis("off")
+html = """
+<style>
+.calendar {
+  width: 100%;
+  border-collapse: collapse;
+}
+.calendar td {
+  border: 1px solid #444;
+  height: 90px;
+  vertical-align: top;
+  padding: 6px;
+}
+.sat { background-color: #e8f1ff; }
+.sun { background-color: #ffecec; }
+.event { background-color: #fff3b0; }
+.day { font-weight: bold; }
+.event-text { font-size: 13px; margin-top: 4px; }
+</style>
+<table class="calendar">
+"""
 
-    table_data = []
-    for week in cal:
-        row = []
-        for day in week:
-            if day == 0:
-                row.append("")
+for week in cal:
+    html += "<tr>"
+    for i, day in enumerate(week):
+        cls = ""
+        if i == 5:
+            cls = "sat"
+        if i == 6:
+            cls = "sun"
+
+        if day == 0:
+            html += "<td></td>"
+        else:
+            key = f"{year}-{month:02d}-{day:02d}"
+            if key in events:
+                cls += " event"
+                html += f"""
+                <td class="{cls}">
+                  <div class="day">{day}</div>
+                  <div class="event-text">{events[key]}</div>
+                </td>
+                """
             else:
-                key = f"{year}-{month:02d}-{day:02d}"
-                if key in events:
-                    row.append(f"{day}\n{events[key]}")  # ✅ 한국어 일정
-                else:
-                    row.append(str(day))
-        table_data.append(row)
+                html += f"<td class='{cls}'><div class='day'>{day}</div></td>"
+    html += "</tr>"
 
-    table = ax.table(
-        cellText=table_data,
-        cellLoc="left",
-        loc="center"
-    )
+html += "</table>"
 
-    table.auto_set_font_size(False)
-    table.set_fontsize(11)
-    table.scale(1.2, 2.0)
-
-    # 주말 색
-    for r in range(len(table_data)):
-        table[r, 5].set_facecolor("#E8F1FF")  # 토요일
-        table[r, 6].set_facecolor("#FFECEC")  # 일요일
-
-    # 일정 있는 날 색
-    for r, week in enumerate(cal):
-        for c, day in enumerate(week):
-            if day != 0:
-                key = f"{year}-{month:02d}-{day:02d}"
-                if key in events:
-                    table[r, c].set_facecolor("#FFF3B0")
-
-    ax.set_title(f"{year}년 {month}월", fontsize=16, pad=10)
-    st.pyplot(fig)
-
-draw_calendar(year, month)
+st.markdown(f"<h2 style='text-align:center'>{year}년 {month}월</h2>", unsafe_allow_html=True)
+st.markdown(html, unsafe_allow_html=True)
