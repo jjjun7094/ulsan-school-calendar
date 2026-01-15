@@ -3,66 +3,91 @@ import calendar
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import matplotlib as mpl
+import os
 
-# ===============================
-# 🔥 한글 폰트 설정 (이게 핵심)
-# ===============================
-font_path = fm.findfont(fm.FontProperties(family="NanumGothic"))
-font_prop = fm.FontProperties(fname=font_path)
-mpl.rcParams["font.family"] = font_prop.get_name()
-mpl.rcParams["axes.unicode_minus"] = False
-
-# ===============================
+# ---------------------------
+# 기본 설정
+# ---------------------------
 st.set_page_config(page_title="울산공업고등학교 일정 달력", layout="wide")
 calendar.setfirstweekday(calendar.MONDAY)
 
-# ===============================
-# 일정 (한글)
-# ===============================
+# ---------------------------
+# 🔥 Matplotlib 한글 폰트 강제 설정 (핵심)
+# ---------------------------
+font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if os.path.exists(font_path):
+    font_prop = fm.FontProperties(fname=font_path)
+    mpl.rcParams["font.family"] = font_prop.get_name()
+else:
+    font_prop = None
+
+mpl.rcParams["axes.unicode_minus"] = False
+
+# ---------------------------
+# 학사 일정 (한글)
+# ---------------------------
 events = {
-    "2026-5-5": "어린이날",
-    "2026-5-21": "중간고사",
-    "2026-5-28": "체육대회",
+    "2026-03-02": "1학기 개학 / 입학식",
+    "2026-04-10": "중간고사",
+    "2026-05-05": "어린이날",
+    "2026-05-21": "체육대회",
+    "2026-06-10": "기말고사",
+    "2026-06-23": "여름방학",
+    "2026-09-01": "2학기 개학",
+    "2026-10-20": "중간고사",
+    "2026-12-08": "기말고사",
 }
 
-st.title("📅 울산공업고등학교 일정 달력")
+# ---------------------------
+# 제목
+# ---------------------------
+st.title("🏫 울산공업고등학교 일정 달력")
 
-year = 2026
+year = st.selectbox("연도 선택", [2026])
 month = st.slider("월 선택", 1, 12, 5)
 
+# ---------------------------
+# 요일 (Streamlit → 한글 확실)
+# ---------------------------
+cols = st.columns(7)
 weekdays = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
-cal = calendar.monthcalendar(year, month)
 
-fig, ax = plt.subplots(figsize=(14, 6))
-ax.set_xlim(0, 7)
-ax.set_ylim(0, len(cal) + 1)
-ax.axis("off")
+for col, day in zip(cols, weekdays):
+    col.markdown(
+        f"<div style='text-align:center; font-weight:bold; font-size:18px;'>{day}</div>",
+        unsafe_allow_html=True
+    )
 
-# 요일
-for i, day in enumerate(weekdays):
-    ax.text(i + 0.5, len(cal) + 0.5, day, ha="center", va="center", fontsize=13, fontproperties=font_prop)
+st.markdown("---")
 
-# 날짜
-for row, week in enumerate(cal):
-    y = len(cal) - row - 1
-    for col, d in enumerate(week):
-        if d == 0:
-            ax.add_patch(plt.Rectangle((col, y), 1, 1, fill=False))
-            continue
+# ---------------------------
+# 달력 그리기
+# ---------------------------
+def draw_calendar(year, month):
+    cal = calendar.monthcalendar(year, month)
 
-        key = f"{year}-{month}-{d}"
-        color = "#FFF3B0" if key in events else "white"
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.axis("off")
 
-        ax.add_patch(plt.Rectangle((col, y), 1, 1, facecolor=color, edgecolor="black"))
-        ax.text(col + 0.05, y + 0.75, str(d), fontsize=12)
+    table_data = []
+    for week in cal:
+        row = []
+        for day in week:
+            if day == 0:
+                row.append("")
+            else:
+                key = f"{year}-{month:02d}-{day:02d}"
+                if key in events:
+                    row.append(f"{day}\n{events[key]}")
+                else:
+                    row.append(str(day))
+        table_data.append(row)
 
-        if key in events:
-            ax.text(
-                col + 0.05,
-                y + 0.4,
-                events[key],
-                fontsize=10,
-                fontproperties=font_prop,
-            )
+    table = ax.table(
+        cellText=table_data,
+        cellLoc="left",
+        loc="center"
+    )
 
-st.pyplot(fig)
+    table.auto_set_font_size(False)
+    table.set
