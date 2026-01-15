@@ -1,17 +1,23 @@
 import streamlit as st
 import calendar
 import matplotlib.pyplot as plt
-from datetime import date
+import matplotlib.font_manager as fm
+import matplotlib as mpl
 
 # ===============================
-# 기본 설정
+# 🔥 한글 폰트 설정 (이게 핵심)
+# ===============================
+font_path = fm.findfont(fm.FontProperties(family="NanumGothic"))
+font_prop = fm.FontProperties(fname=font_path)
+mpl.rcParams["font.family"] = font_prop.get_name()
+mpl.rcParams["axes.unicode_minus"] = False
+
 # ===============================
 st.set_page_config(page_title="울산공업고등학교 일정 달력", layout="wide")
-
 calendar.setfirstweekday(calendar.MONDAY)
 
 # ===============================
-# 일정 데이터 (예시)
+# 일정 (한글)
 # ===============================
 events = {
     "2026-5-5": "어린이날",
@@ -19,83 +25,44 @@ events = {
     "2026-5-28": "체육대회",
 }
 
-# ===============================
-# 제목
-# ===============================
 st.title("📅 울산공업고등학교 일정 달력")
 
-# ===============================
-# 연 / 월 선택
-# ===============================
-year = st.selectbox("연도 선택", [2026])
+year = 2026
 month = st.slider("월 선택", 1, 12, 5)
 
-# ===============================
-# 요일 (한국어)
-# ===============================
 weekdays = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
-
-# ===============================
-# 달력 데이터
-# ===============================
 cal = calendar.monthcalendar(year, month)
 
-# ===============================
-# 그래프 크기 조절 (너무 크지 않게)
-# ===============================
 fig, ax = plt.subplots(figsize=(14, 6))
 ax.set_xlim(0, 7)
 ax.set_ylim(0, len(cal) + 1)
 ax.axis("off")
 
-# ===============================
-# 요일 헤더
-# ===============================
+# 요일
 for i, day in enumerate(weekdays):
-    ax.text(i + 0.5, len(cal) + 0.5, day, ha="center", va="center", fontsize=13, weight="bold")
+    ax.text(i + 0.5, len(cal) + 0.5, day, ha="center", va="center", fontsize=13, fontproperties=font_prop)
 
-# ===============================
-# 달력 그리기
-# ===============================
+# 날짜
 for row, week in enumerate(cal):
     y = len(cal) - row - 1
-    for col, day in enumerate(week):
-        if day == 0:
+    for col, d in enumerate(week):
+        if d == 0:
             ax.add_patch(plt.Rectangle((col, y), 1, 1, fill=False))
             continue
 
-        date_key = f"{year}-{month}-{day}"
-
-        # 기본 색
-        color = "white"
-
-        # 일정 있는 날
-        if date_key in events:
-            color = "#FFF3B0"
-
-        # 토요일 / 일요일 색
-        if col == 5:
-            color = "#EAF2FF"
-        if col == 6:
-            color = "#FFECEC"
+        key = f"{year}-{month}-{d}"
+        color = "#FFF3B0" if key in events else "white"
 
         ax.add_patch(plt.Rectangle((col, y), 1, 1, facecolor=color, edgecolor="black"))
+        ax.text(col + 0.05, y + 0.75, str(d), fontsize=12)
 
-        # 날짜 숫자
-        ax.text(col + 0.05, y + 0.75, str(day), ha="left", va="center", fontsize=12, weight="bold")
-
-        # 일정 텍스트
-        if date_key in events:
+        if key in events:
             ax.text(
                 col + 0.05,
                 y + 0.4,
-                events[date_key],
-                ha="left",
-                va="top",
+                events[key],
                 fontsize=10,
+                fontproperties=font_prop,
             )
 
-# ===============================
-# 출력
-# ===============================
 st.pyplot(fig)
