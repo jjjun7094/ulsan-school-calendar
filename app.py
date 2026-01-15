@@ -1,10 +1,7 @@
 import streamlit as st
 import calendar
 import matplotlib.pyplot as plt
-from matplotlib import font_manager
 import matplotlib as mpl
-import os
-import urllib.request
 
 # ---------------------------
 # 기본 설정
@@ -13,18 +10,9 @@ st.set_page_config(page_title="울산공업고등학교 일정 달력", layout="
 calendar.setfirstweekday(calendar.MONDAY)
 
 # ---------------------------
-# ✅ 한글 폰트 설정 (네모 □□□ 문제 해결)
+# matplotlib 기본 설정
 # ---------------------------
 mpl.rcParams["axes.unicode_minus"] = False
-
-FONT_URL = "https://raw.githubusercontent.com/googlefonts/nanum-gothic/main/fonts/ttf/NanumGothic-Regular.ttf"
-FONT_PATH = "NanumGothic.ttf"
-
-if not os.path.exists(FONT_PATH):
-    urllib.request.urlretrieve(FONT_URL, FONT_PATH)
-
-font_prop = font_manager.FontProperties(fname=FONT_PATH)
-mpl.rcParams["font.family"] = font_prop.get_name()
 
 # ---------------------------
 # 학사 일정
@@ -50,7 +38,7 @@ year = st.selectbox("연도 선택", [2026])
 month = st.slider("월 선택", 1, 12, 5)
 
 # ---------------------------
-# 요일 (한글, Streamlit)
+# 요일 (한글)
 # ---------------------------
 cols = st.columns(7)
 weekdays = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
@@ -64,7 +52,7 @@ for col, day in zip(cols, weekdays):
 st.markdown("---")
 
 # ---------------------------
-# 달력 그리기
+# 달력
 # ---------------------------
 def draw_calendar(year, month):
     cal = calendar.monthcalendar(year, month)
@@ -98,10 +86,10 @@ def draw_calendar(year, month):
 
     # 주말 색
     for r in range(len(table_data)):
-        table[r, 5].set_facecolor("#E8F1FF")  # 토요일
-        table[r, 6].set_facecolor("#FFECEC")  # 일요일
+        table[r, 5].set_facecolor("#E8F1FF")
+        table[r, 6].set_facecolor("#FFECEC")
 
-    # 일정 있는 날 색
+    # 일정 있는 날
     for r, week in enumerate(cal):
         for c, day in enumerate(week):
             if day != 0:
