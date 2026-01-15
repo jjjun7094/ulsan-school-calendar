@@ -1,26 +1,13 @@
 import streamlit as st
 import calendar
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 import matplotlib as mpl
-import os
 
 # ---------------------------
 # 기본 설정
 # ---------------------------
 st.set_page_config(page_title="울산공업고등학교 일정 달력", layout="wide")
 calendar.setfirstweekday(calendar.MONDAY)
-
-# ---------------------------
-# 🔥 Matplotlib 한글 폰트 강제 설정 (핵심)
-# ---------------------------
-font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if os.path.exists(font_path):
-    font_prop = fm.FontProperties(fname=font_path)
-    mpl.rcParams["font.family"] = font_prop.get_name()
-else:
-    font_prop = None
-
 mpl.rcParams["axes.unicode_minus"] = False
 
 # ---------------------------
@@ -90,4 +77,23 @@ def draw_calendar(year, month):
     )
 
     table.auto_set_font_size(False)
-    table.set
+    table.set_fontsize(11)
+    table.scale(1.2, 2.0)
+
+    # 주말 색
+    for r in range(len(table_data)):
+        table[r, 5].set_facecolor("#E8F1FF")  # 토요일
+        table[r, 6].set_facecolor("#FFECEC")  # 일요일
+
+    # 일정 있는 날 색
+    for r, week in enumerate(cal):
+        for c, day in enumerate(week):
+            if day != 0:
+                key = f"{year}-{month:02d}-{day:02d}"
+                if key in events:
+                    table[r, c].set_facecolor("#FFF3B0")
+
+    ax.set_title(f"{year}년 {month}월", fontsize=16, pad=10)
+    st.pyplot(fig)
+
+draw_calendar(year, month)
