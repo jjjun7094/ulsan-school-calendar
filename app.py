@@ -1,101 +1,105 @@
 import streamlit as st
 import calendar
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
+from matplotlib import font_manager
 import matplotlib as mpl
-
-# ---------------------------
-# 한글 폰트 설정 (Streamlit Cloud 대응)
-# ---------------------------
-font_path = fm.findfont(fm.FontProperties(family='DejaVu Sans'))
-mpl.rcParams["font.family"] = font_path
-mpl.rcParams["axes.unicode_minus"] = False
+import os
 
 # ---------------------------
 # 기본 설정
 # ---------------------------
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="울산공업고등학교 일정 달력", layout="wide")
 calendar.setfirstweekday(calendar.MONDAY)
 
 # ---------------------------
-# 울산공업고등학교 일정
+# 한글 폰트 설정 (없어도 Streamlit 텍스트는 한글 OK)
 # ---------------------------
-EVENTS = {
-    "2026-5-5": "어린이날",
-    "2026-5-15": "학교 축제",
-    "2026-6-20": "기말고사",
+mpl.rcParams["axes.unicode_minus"] = False
+
+# ---------------------------
+# 학사 일정 (예시)
+# ---------------------------
+events = {
+    "2026-03-02": "1학기 개학 / 입학식",
+    "2026-04-10": "중간고사",
+    "2026-05-05": "어린이날",
+    "2026-05-21": "체육대회",
+    "2026-06-10": "기말고사",
+    "2026-06-23": "여름방학",
+    "2026-09-01": "2학기 개학",
+    "2026-10-20": "중간고사",
+    "2026-12-08": "기말고사",
 }
 
 # ---------------------------
 # 제목
 # ---------------------------
-st.title("📅 울산공업고등학교 일정 달력")
+st.title("🏫 울산공업고등학교 일정 달력")
 
 year = st.selectbox("연도 선택", [2026])
 month = st.slider("월 선택", 1, 12, 5)
 
-cal = calendar.monthcalendar(year, month)
-
-# ✅ 달력 크기 줄임
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.set_xlim(0, 7)
-ax.set_ylim(0, len(cal) + 1)
-ax.axis("off")
-
 # ---------------------------
-# 요일 표시 (월~일)
+# ✅ 요일 (Streamlit으로 직접 표시 → 한글 100% 보임)
 # ---------------------------
+cols = st.columns(7)
 weekdays = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
-for i, day in enumerate(weekdays):
-    ax.text(
-        i + 0.5,
-        len(cal) + 0.4,
-        day,
-        ha="center",
-        va="center",
-        fontsize=13,
-        fontweight="bold"
+
+for col, day in zip(cols, weekdays):
+    col.markdown(
+        f"<div style='text-align:center; font-weight:bold; font-size:18px;'>{day}</div>",
+        unsafe_allow_html=True
     )
 
+st.markdown("---")
+
 # ---------------------------
-# 날짜 & 일정
+# 달력 그리기
 # ---------------------------
-for w, week in enumerate(cal):
-    for d, day in enumerate(week):
-        if day == 0:
-            continue
+def draw_calendar(year, month):
+    cal = calendar.monthcalendar(year, month)
 
-        y = len(cal) - w - 0.5
-        x = d
+    fig, ax = plt.subplots(figsize=(10, 5))  # ✅ 크기 적당하게 조정
+    ax.axis("off")
 
-        key = f"{year}-{month}-{day}"
-        event = EVENTS.get(key)
+    table_data = []
+    for week in cal:
+        row = []
+        for day in week:
+            if day == 0:
+                row.append("")
+            else:
+                key = f"{year}-{month:02d}-{day:02d}"
+                if key in events:
+                    row.append(f"{day}\n{events[key]}")
+                else:
+                    row.append(str(day))
+        table_data.append(row)
 
-        # 일정 있는 날 → 노란색
-        if event:
-            ax.add_patch(
-                plt.Rectangle((x, y - 0.5), 1, 1, color="#FFE699")
-            )
+    table = ax.table(
+        cellText=table_data,
+        cellLoc="left",
+        loc="center"
+    )
 
-        # 날짜 숫자
-        ax.text(
-            x + 0.05,
-            y + 0.25,
-            str(day),
-            fontsize=14,
-            fontweight="bold",
-            va="top"
-        )
+    table.auto_set_font_size(False)
+    table.set_fontsize(11)
+    table.scale(1.2, 2.0)
 
-        # ✅ 일정 이름 칸 안에 표시
-        if event:
-            ax.text(
-                x + 0.05,
-                y - 0.05,
-                event,
-                fontsize=10,
-                va="top",
-                wrap=True
-            )
+    # 주말 색
+    for r in range(len(table_data)):
+        table[r, 5].set_facecolor("#E8F1FF")  # 토요일
+        table[r, 6].set_facecolor("#FFECEC")  # 일요일
 
-st.pyplot(fig)
+    # 일정 있는 날 색
+    for r, week in enumerate(cal):
+        for c, day in enumerate(week):
+            if day != 0:
+                key = f"{year}-{month:02d}-{day:02d}"
+                if key in events:
+                    table[r, c].set_facecolor("#FFF3B0")
+
+    ax.set_title(f"{year}년 {month}월", fontsize=16, pad=10)
+    st.pyplot(fig)
+
+draw_calendar(year, month)
