@@ -15,28 +15,22 @@ YEAR = st.session_state.year
 MONTH = st.session_state.month
 
 # =====================
-# 일정 (2026년, 한국어)
+# 일정 (한국어)
 # =====================
 events = {
     (2026, 3, 1): "삼일절",
-
     (2026, 5, 5): "어린이날",
     (2026, 5, 24): "부처님 오신날",
-    (2026, 5, 25): "대체공휴일",
-
+    (2026, 5, 25): "대체 공휴일",
     (2026, 6, 6): "현충일",
-
     (2026, 8, 15): "광복절",
-    (2026, 8, 17): "대체공휴일",
-
+    (2026, 8, 17): "대체 공휴일",
     (2026, 9, 24): "추석연휴",
     (2026, 9, 25): "추석",
     (2026, 9, 26): "추석연휴",
-
     (2026, 10, 3): "개천절",
-    (2026, 10, 5): "대체공휴일",
+    (2026, 10, 5): "대체 공휴일",
     (2026, 10, 9): "한글날",
-
     (2026, 12, 25): "성탄절",
 }
 
@@ -107,6 +101,7 @@ st.markdown("""
 .event-text {
     margin-top: 8px;
     font-size: 14px;
+    color: white;
 }
 
 .sat {
@@ -120,10 +115,18 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =====================
-# 제목
+# 🔹 학교 제목 (딱 이 줄만 추가됨)
 # =====================
 st.markdown(
-    f"<h1 style='text-align:center;'>{YEAR}년 {MONTH}월</h1>",
+    "<h2 style='text-align:center; margin-bottom:0;'>울산공업고등학교 일정</h2>",
+    unsafe_allow_html=True
+)
+
+# =====================
+# 월 제목
+# =====================
+st.markdown(
+    f"<h1 style='text-align:center; margin-top:5px;'>{YEAR}년 {MONTH}월</h1>",
     unsafe_allow_html=True
 )
 
@@ -151,7 +154,7 @@ for week in month_days:
             classes.append("sat")
         if i == 6:
             classes.append("sun")
-        if day != 0 and (YEAR, MONTH, day) in events:
+        if (YEAR, MONTH, day) in events:
             classes.append("event")
 
         class_str = " ".join(classes)
